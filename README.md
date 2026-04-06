@@ -81,6 +81,7 @@ npm run dev
 - Edit `ANIMATION_HINTS` in `src/config/character.js` if your clip names differ.
 
 
+
 ## Deploy to GitHub Pages
 
 This project can be deployed as a static site with GitHub Actions.
@@ -104,3 +105,5 @@ For this repo, if your repo name is `character-play`, the URL will be:
 ```text
 https://<your-username>.github.io/character-play/
 ```
+=======
+
