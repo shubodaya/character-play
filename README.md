@@ -1,109 +1,63 @@
-# Character Battlefield Prototype (Three.js)
+# Character Play Prototype
 
-Simple browser-based 3D prototype with walking, running, jumping, and free look.
+This folder contains a standalone browser-based third-person character controller prototype built with Three.js and Vite.
 
-## Features
+## Asset inspection
 
-- Third-person camera with smooth mouse look (pointer lock).
-- Controls:
-  - `W A S D` movement
-  - `Shift` hold to run
-  - `Space` to jump
-  - Mouse to look around
-- Simple battlefield-style map:
-  - large ground plane
-  - a few basic obstacles (box/rock style blockers)
-- Basic physics feel:
-  - gravity
-  - ground collision
-  - obstacle collision in horizontal movement
-- Optional animation support (`idle`, `walk`, `run`, `jump`) if your model has matching clips.
+Available source asset in this folder:
 
-## Project Structure
+- `cyberpunk_character.glb`
 
-```
-character-play/
-├─ public/
-│  └─ assets/
-│     └─ character/          # put model files here
-├─ src/
-│  ├─ config/
-│  │  └─ character.js        # model path + animation name hints
-│  ├─ core/
-│  │  ├─ cameraRig.js        # smooth third-person camera + clip prevention
-│  │  ├─ input.js            # keyboard input
-│  │  ├─ player.js           # character loading + animation setup
-│  │  └─ world.js            # map / lighting / obstacles
-│  ├─ main.js                # game loop + movement + collision
-│  └─ styles.css
-├─ index.html
-└─ package.json
-```
+Asset notes:
 
-## Setup
+- glTF 2.0 binary with embedded textures
+- skinned humanoid-style character mesh
+- one embedded clip only: `A-pose (0.00s)`
 
-1. Install dependencies:
+Because the asset pack does not include usable locomotion clips, the prototype drives walk and run body motion procedurally on the character rig instead of relying on animation files.
+
+## Controls
+
+- `WASD` move
+- `Shift` run
+- `Space` jump
+- `Mouse` look around
+- `Esc` release mouse capture
+
+## Local setup
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Add your character asset into:
-
-```text
-public/assets/character/
-```
-
-3. Update `src/config/character.js`:
-
-```js
-export const CHARACTER_MODEL_PATH = '/assets/character/character.glb';
-```
-
-Supported model types:
-
-- `.glb` / `.gltf` (GLTFLoader)
-- `.fbx` (FBXLoader)
-
-If the model is missing or fails to load, the app uses a capsule fallback so you can still test movement and camera.
-
-4. Run locally:
+Run the prototype:
 
 ```bash
 npm run dev
 ```
 
-5. Open the URL shown by Vite (usually `http://localhost:5173`).
-
-## Notes on animations
-
-- Animation matching is name-based and case-insensitive.
-- Edit `ANIMATION_HINTS` in `src/config/character.js` if your clip names differ.
-
-
-
-## Deploy to GitHub Pages
-
-This project can be deployed as a static site with GitHub Actions.
-
-1. Push this repository to GitHub.
-2. Ensure the default branch is `main` (or update `.github/workflows/deploy-pages.yml`).
-3. In GitHub: **Settings → Pages → Build and deployment → Source = GitHub Actions**.
-4. Push to `main` (or run the workflow manually in the **Actions** tab).
-5. After deployment completes, GitHub shows the live URL in:
-   - **Actions** run summary, and
-   - **Settings → Pages**.
-
-Typical URL format:
+Open the local URL shown by Vite, usually:
 
 ```text
-https://<your-username>.github.io/<your-repo-name>/
+http://localhost:5173
 ```
 
-For this repo, if your repo name is `character-play`, the URL will be:
+## Build
 
-```text
-https://<your-username>.github.io/character-play/
+```bash
+npm run build
 ```
-=======
 
+## What is implemented
+
+- battlefield test map with ground plane and placeholder cover
+- third-person camera with mouse look
+- camera clamp so it does not dip below the floor
+- WASD movement
+- run on `Shift`
+- jump on `Space`
+- gravity and ground collision
+- basic obstacle collision
+- procedural walk and run arm/leg motion on the imported rig

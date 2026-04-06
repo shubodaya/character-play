@@ -1,120 +1,66 @@
-import * as THREE from 'three';
-import { buildWorld } from './core/world.js';
-import { createInput } from './core/input.js';
-import { createPlayer, setPlayerAnimation } from './core/player.js';
-import { createCameraRig } from './core/cameraRig.js';
+import "./style.css";
+import { createCharacterControllerPrototype } from "./game/character-controller-prototype.js";
 
-const canvas = document.querySelector('#game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const app = document.querySelector("#app");
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
+app.innerHTML = `
+  <main class="app-shell">
+    <div class="scene-host" data-scene></div>
 
-const input = createInput();
-const world = buildWorld(scene);
-const obstacleMeshes = scene.children.filter((obj) => obj.isMesh && obj.geometry.type === 'BoxGeometry');
-const player = await createPlayer(scene);
-const cameraRig = createCameraRig(camera, canvas, scene);
+    <div class="title-pill">Third-Person Controller Prototype</div>
 
-const clock = new THREE.Clock();
+    <aside class="hud-panel">
+      <p class="hud-eyebrow">Movement prototype</p>
+      <p class="hud-copy" data-status>Loading character...</p>
+      <p class="hud-meta" data-asset>Asset: cyberpunk_character.glb | Clips: inspecting...</p>
+      <p class="hud-error" data-error hidden></p>
 
-const walkSpeed = 4;
-const runSpeed = 7;
-const jumpSpeed = 6;
-const gravity = 18;
+      <div class="control-grid">
+        <div class="control-card">
+          <span class="control-label">Move</span>
+          <span>WASD</span>
+        </div>
+        <div class="control-card">
+          <span class="control-label">Run</span>
+          <span>Hold Shift</span>
+        </div>
+        <div class="control-card">
+          <span class="control-label">Jump</span>
+          <span>Space</span>
+        </div>
+        <div class="control-card">
+          <span class="control-label">Look</span>
+          <span>Mouse</span>
+        </div>
+      </div>
 
-function resolveHorizontalCollisions(position, radius) {
-  for (const box of world.obstacles) {
-    const closestX = THREE.MathUtils.clamp(position.x, box.min.x, box.max.x);
-    const closestZ = THREE.MathUtils.clamp(position.z, box.min.z, box.max.z);
+      <div class="state-row">
+        <span class="control-label">State</span>
+        <span class="state-value" data-state>loading</span>
+      </div>
+    </aside>
 
-    const deltaX = position.x - closestX;
-    const deltaZ = position.z - closestZ;
-    const distSq = deltaX * deltaX + deltaZ * deltaZ;
+    <div class="capture-prompt" data-prompt>
+      <div class="capture-card">
+        <p class="capture-title">Click to capture the mouse</p>
+        <p class="capture-copy">
+          Spawn into the test map, use WASD to move, hold Shift to run, and
+          press Space to jump.
+        </p>
+      </div>
+    </div>
+  </main>
+`;
 
-    if (distSq < radius * radius && distSq > 0.000001) {
-      const dist = Math.sqrt(distSq);
-      const push = (radius - dist) + 0.001;
-      position.x += (deltaX / dist) * push;
-      position.z += (deltaZ / dist) * push;
-    }
-  }
-}
-
-function update() {
-  const delta = Math.min(0.033, clock.getDelta());
-  const yaw = cameraRig.getYaw();
-
-  const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
-  const right = new THREE.Vector3(forward.z, 0, -forward.x).normalize();
-
-  const moveDir = new THREE.Vector3();
-  if (input.isDown('KeyW')) moveDir.add(forward);
-  if (input.isDown('KeyS')) moveDir.sub(forward);
-  if (input.isDown('KeyD')) moveDir.add(right);
-  if (input.isDown('KeyA')) moveDir.sub(right);
-
-  const isMoving = moveDir.lengthSq() > 0;
-  const isRunning = input.isDown('ShiftLeft') || input.isDown('ShiftRight');
-
-  if (isMoving) {
-    moveDir.normalize();
-    const speed = isRunning ? runSpeed : walkSpeed;
-    player.velocity.x = moveDir.x * speed;
-    player.velocity.z = moveDir.z * speed;
-
-    const facingYaw = Math.atan2(moveDir.x, moveDir.z);
-    player.group.rotation.y = THREE.MathUtils.lerp(player.group.rotation.y, facingYaw, 1 - Math.exp(-delta * 12));
-  } else {
-    player.velocity.x = 0;
-    player.velocity.z = 0;
-  }
-
-  const isGrounded = player.group.position.y <= world.groundY + 0.0001;
-  if (isGrounded && input.isDown('Space')) {
-    player.velocity.y = jumpSpeed;
-  }
-
-  player.velocity.y -= gravity * delta;
-
-  player.group.position.x += player.velocity.x * delta;
-  player.group.position.z += player.velocity.z * delta;
-  player.group.position.y += player.velocity.y * delta;
-
-  resolveHorizontalCollisions(player.group.position, player.radius);
-
-  if (player.group.position.y < world.groundY) {
-    player.group.position.y = world.groundY;
-    player.velocity.y = 0;
-  }
-
-  if (player.mixer) {
-    const risingOrFalling = Math.abs(player.velocity.y) > 0.8 && !isGrounded;
-    if (risingOrFalling && player.actions.jump) {
-      setPlayerAnimation(player, 'jump');
-    } else if (isMoving && isRunning && player.actions.run) {
-      setPlayerAnimation(player, 'run');
-    } else if (isMoving && player.actions.walk) {
-      setPlayerAnimation(player, 'walk');
-    } else if (player.actions.idle) {
-      setPlayerAnimation(player, 'idle');
-    }
-    player.mixer.update(delta);
-  }
-
-  cameraRig.update(player.group.position, delta, obstacleMeshes);
-  renderer.render(scene, camera);
-  requestAnimationFrame(update);
-}
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+const prototype = createCharacterControllerPrototype({
+  assetText: app.querySelector("[data-asset]"),
+  container: app.querySelector("[data-scene]"),
+  errorText: app.querySelector("[data-error]"),
+  prompt: app.querySelector("[data-prompt]"),
+  stateText: app.querySelector("[data-state]"),
+  statusText: app.querySelector("[data-status]"),
 });
 
-update();
+window.addEventListener("beforeunload", () => {
+  prototype.dispose();
+});
