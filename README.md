@@ -50,6 +50,19 @@ http://localhost:5173
 npm run build
 ```
 
+## CI/CD (GitHub Actions)
+
+This repo now includes a workflow at `.github/workflows/ci-cd.yml`.
+
+- **CI**: runs on every pull request and on pushes to `main` and `work`
+- **CD**: deploys to **GitHub Pages** on pushes to `main`
+
+### One-time GitHub setup
+
+1. Go to **Settings → Pages** in your GitHub repo.
+2. Set **Source** to **GitHub Actions**.
+3. Push this branch (or merge to `main`) and the workflow will deploy automatically.
+
 ## What is implemented
 
 - battlefield test map with ground plane and placeholder cover
