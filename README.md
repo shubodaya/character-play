@@ -24,6 +24,13 @@ Because the asset pack does not include usable locomotion clips, the prototype d
 - `Mouse` look around
 - `Esc` release mouse capture
 
+### Mobile controls
+
+- left thumbstick moves the character
+- drag on the right side of the screen to look around
+- hold `Run` to sprint
+- tap `Jump` to jump, ledge grab, or climb
+
 ## Local setup
 
 Install dependencies:

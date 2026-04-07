@@ -10,7 +10,6 @@ app.innerHTML = `
     <div class="title-pill">Third-Person Controller Prototype</div>
 
     <aside class="hud-panel">
-      <p class="hud-eyebrow">Movement prototype</p>
       <p class="hud-copy" data-status>Loading character...</p>
       <p class="hud-meta" data-asset>Asset: cyberpunk_character.glb | Clips: inspecting...</p>
       <p class="hud-error" data-error hidden></p>
@@ -49,6 +48,25 @@ app.innerHTML = `
         </p>
       </div>
     </div>
+
+    <div class="mobile-hud" data-mobile-hud hidden>
+      <div class="mobile-look-zone" data-look-zone aria-hidden="true"></div>
+
+      <div class="mobile-stick" data-move-pad aria-label="Movement stick">
+        <div class="mobile-stick-base">
+          <div class="mobile-stick-thumb" data-move-thumb></div>
+        </div>
+      </div>
+
+      <div class="mobile-actions">
+        <button class="mobile-action-button mobile-run-button" data-run-button type="button">
+          Run
+        </button>
+        <button class="mobile-action-button mobile-jump-button" data-jump-button type="button">
+          Jump
+        </button>
+      </div>
+    </div>
   </main>
 `;
 
@@ -56,7 +74,13 @@ const prototype = createCharacterControllerPrototype({
   assetText: app.querySelector("[data-asset]"),
   container: app.querySelector("[data-scene]"),
   errorText: app.querySelector("[data-error]"),
+  jumpButton: app.querySelector("[data-jump-button]"),
+  lookZone: app.querySelector("[data-look-zone]"),
+  mobileHud: app.querySelector("[data-mobile-hud]"),
+  movePad: app.querySelector("[data-move-pad]"),
+  moveThumb: app.querySelector("[data-move-thumb]"),
   prompt: app.querySelector("[data-prompt]"),
+  runButton: app.querySelector("[data-run-button]"),
   stateText: app.querySelector("[data-state]"),
   statusText: app.querySelector("[data-status]"),
 });

@@ -6,8 +6,12 @@ export const WALK_SPEED = 4.25;
 export const RUN_SPEED = 7.4;
 export const JUMP_SPEED = 8.9;
 export const GRAVITY = 26;
-export const CAMERA_DISTANCE = 6.4;
-export const CAMERA_FOLLOW = 10;
+export const CAMERA_DISTANCE = 4.35;
+export const CAMERA_FOLLOW = 12;
+export const CAMERA_HEIGHT_OFFSET = 0.35;
+export const CAMERA_MIN_HEIGHT = 1.2;
+export const CAMERA_PITCH_MAX = 0.55;
+export const CAMERA_PITCH_MIN = 0.04;
 export const LOOK_SENSITIVITY = 0.0024;
 export const WORLD_LIMIT = 36;
 
@@ -95,8 +99,63 @@ export function dampAngle(current, target, smoothing, delta) {
   return current + wrapAngle(target - current) * dampFactor(smoothing, delta);
 }
 
+function getTopInset(collider, axis, inset) {
+  const span = collider.max[axis] - collider.min[axis];
+  return Math.min(inset, Math.max(span * 0.5 - 0.05, 0));
+}
+
+export function getTopBounds(collider, inset = PLAYER_RADIUS * 0.55) {
+  const insetX = getTopInset(collider, "x", inset);
+  const insetZ = getTopInset(collider, "z", inset);
+
+  return {
+    maxX: collider.max.x - insetX,
+    maxZ: collider.max.z - insetZ,
+    minX: collider.min.x + insetX,
+    minZ: collider.min.z + insetZ,
+  };
+}
+
+export function isWithinTopBounds(collider, x, z, inset = PLAYER_RADIUS * 0.55) {
+  const bounds = getTopBounds(collider, inset);
+
+  return x >= bounds.minX && x <= bounds.maxX && z >= bounds.minZ && z <= bounds.maxZ;
+}
+
+export function findGroundSupport(position, previousFeetY, velocityY, colliders) {
+  const isDescending = velocityY <= 0;
+  let bestSupport = null;
+
+  for (const collider of colliders) {
+    const topY = collider.max.y;
+
+    if (!isWithinTopBounds(collider, position.x, position.z)) {
+      continue;
+    }
+
+    const standingOnTop = Math.abs(position.y - topY) <= 0.12;
+    const landedOnTop =
+      isDescending &&
+      previousFeetY >= topY - 0.04 &&
+      position.y <= topY + 0.18;
+
+    if (!standingOnTop && !landedOnTop) {
+      continue;
+    }
+
+    if (!bestSupport || topY > bestSupport.height) {
+      bestSupport = {
+        collider,
+        height: topY,
+      };
+    }
+  }
+
+  return bestSupport;
+}
+
 export function resolveCollisionsOnAxis(axis, position, previousValue, feetY, colliders) {
-  let collided = false;
+  let collision = null;
   const headY = feetY + PLAYER_HEIGHT;
   const otherAxis = axis === "x" ? "z" : "x";
 
@@ -121,19 +180,30 @@ export function resolveCollisionsOnAxis(axis, position, previousValue, feetY, co
       continue;
     }
 
+    let side = 0;
+
     if (previousValue <= minAxis) {
       position[axis] = minAxis;
+      side = -1;
     } else if (previousValue >= maxAxis) {
       position[axis] = maxAxis;
+      side = 1;
     } else {
       const pushToMin = Math.abs(previousValue - minAxis) < Math.abs(previousValue - maxAxis);
       position[axis] = pushToMin ? minAxis : maxAxis;
+      side = pushToMin ? -1 : 1;
     }
 
-    collided = true;
+    if (!collision) {
+      collision = {
+        axis,
+        collider,
+        side,
+      };
+    }
   }
 
-  return collided;
+  return collision;
 }
 
 export function summarizeClips(clips) {
